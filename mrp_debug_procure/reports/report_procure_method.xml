@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<template id="report_procure_method">
+    <t t-set="data_report_landscape" t-value="True"/>
+    <t t-call="web.basic_layout">
+    
+    <t t-foreach="docs" t-as="o">
+        <t t-set="mto_route" t-value="get_mto_route()" />
+        <t t-set="rules_and_methods" t-value="get_rules_and_methods(o,mto_route)" />
+    
+        <t t-set="all_rules"  t-value="rules_and_methods['all_rules']" />
+        <t t-set="first_rule" t-value="rules_and_methods['first_rule']" />
+        <t t-set="methods"     t-value="rules_and_methods['methods']" />
+    
+        <div class="page">
+        <h4 class="text-center"><u>&amp;nbsp;&amp;nbsp;补货方法的推算&amp;nbsp;&amp;nbsp;</u></h4>
+        
+        <h5 class="text-left">基本信息</h5>
+        <table class="table table-sm" style="font-size: 10px;" border="1"> 
+            <thead style="background-color: #eee">
+            <tr>
+                <th width="15%" class="text-center">产品名称:</th>
+                <th width="20%" class="text-center">已经选用的补货方法:</th>
+                <th width="15%" class="text-center">仓库:</th>
+                <th width="25%" class="text-center">起始库位:</th>
+                <th width="25%" class="text-center">目的库位:</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td ><span t-field="o.product_id"/></td>
+                <td ><span t-field="o.procure_method"/></td>
+                <td ><span t-field="o.warehouse_id"/></td>
+                <td ><span t-field="o.location_id"/></td>
+                <td ><span t-field="o.location_dest_id"/></td>
+            </tr>
+            </tbody>
+        </table>
+        
+        <p/>
+        <h5 class="text-left">全局配置的Mto</h5>
+        <table class="table table-sm" style="font-size: 10px;" border="1"> 
+            <thead style="background-color: #eee">
+            <tr>
+                <th width="20%" class="text-center">id</th>
+                <th width="30%" class="text-center">name</th>
+                <th width="30%" class="text-center">display name</th>
+                <th width="20%" class="text-center">sequence </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td><span t-field="mto_route.id"/></td>
+                <td><span t-field="mto_route.name"/></td>
+                <td><span t-field="mto_route.display_name"/></td>
+                <td><span t-field="mto_route.sequence"/></td>
+            </tr>
+            </tbody>
+        </table>
+        
+        <p/>
+        <h5 class="text-left">产品、产品分类和仓库中定义的路径</h5>
+        <table class="table table-sm" style="font-size: 10px;" border="1"> 
+            <thead style="background-color: #eee">
+            <tr>
+                <th width="10%" class="text-center">路径定义在</th>
+                <th width="10%"  class="text-center">路径ID</th>
+                <th width="20%" class="text-center">路径名称</th>
+                <th width="40%" class="text-center">路径显示名称</th>
+                <th width="20%" class="text-center">优先级</th>
+            </tr>
+            </thead>
+            <tbody>
+            <t t-foreach="o.product_id.route_ids" t-as="route"> 
+            <tr>
+                <td>产品</td>
+                <td><span t-field="route.id"/></td>
+                <td><span t-field="route.name"/></td>
+                <td><span t-field="route.display_name"/></td>
+                <td><span t-field="route.sequence"/></td>
+            </tr>
+            </t>
+            <t t-foreach="o.product_id.route_from_categ_ids" t-as="route"> 
+            <tr>
+                <td>产品分类</td>
+                <td><span t-field="route.id"/></td>
+                <td><span t-field="route.name"/></td>
+                <td><span t-field="route.display_name"/></td>
+                <td><span t-field="route.sequence"/></td>
+            </tr>
+            </t>   
+            <t t-foreach="o.warehouse_id.route_ids" t-as="route"> 
+            <tr>
+                <td>仓库</td>
+                <td><span t-field="route.id"/></td>
+                <td><span t-field="route.name"/></td>
+                <td><span t-field="route.display_name"/></td>
+                <td><span t-field="route.sequence"/></td>
+            </tr>
+            </t> 
+            </tbody>
+        </table>
+       
+        <p/>
+        <h5 class="text-left">上述路径中定义的规则（不包括push类规则）</h5>
+        <table class="table table-sm" style="font-size: 10px;" border="1"> 
+            <thead style="background-color: #eee">
+            <tr>
+                <th width="10%" class="text-center">action</th>
+                <th width="10%"  class="text-center">路径id</th>
+                <th width="10%" class="text-center">补货方法</th>
+                <th width="20%" class="text-center">源库位</th>
+                <th width="20%" class="text-center">目的库位</th>
+                <th width="10%" class="text-center">优先级</th>
+                <th width="5%" class="text-center">可用</th>
+                <th width="15%" class="text-center">不可用原因</th>
+            </tr>
+            </thead>
+            <tbody>
+            
+            <t t-foreach="all_rules" t-as="rule"> 
+                <t t-set="usable" t-value="'No'"/> 
+                <t t-set="usable" t-value="'Yes'"  
+                        t-if="rule.location_src_id.id == o.location_id.id and rule.location_id.id== o.location_dest_id.id"/>
+                <t t-set="reason" t-value="''"/>
+                <t t-set="reason" t-value="'源库位不匹配'" 
+                        t-if="rule.location_src_id.id != o.location_id.id"/>
+                <t t-set="reason" t-value="'目标库位不匹配'"
+                        t-if="rule.location_id.id != o.location_dest_id.id"/>
+                <t t-set="reason" t-value="'所有库位不匹配'" 
+                        t-if="rule.location_src_id.id != o.location_id.id and rule.location_id.id != o.location_dest_id.id"/>
+
+              <tr>
+                <td><span t-field="rule.action"/></td>
+                <td><span t-field="rule.route_id.id"/></td>
+                <td><span t-field="rule.procure_method"/></td>
+                <td><span t-field="rule.location_src_id"/></td>
+                <td><span t-field="rule.location_id"/></td>
+                <td><span t-field="rule.sequence"/></td>
+                
+                <td><span t-esc="usable"/></td>              
+                <td><span t-esc="reason"/></td>
+
+              </tr>
+            </t> 
+            </tbody>
+        </table>
+
+        <p/>
+        <h5 class="text-left">选中的规则路径</h5>
+        <table class="table table-sm" style="font-size: 10px;" border="1"> 
+            <thead style="background-color: #eee">
+            <tr>
+                <th width="10%" class="text-center">补货方法</th>
+                <th width="5%"  class="text-center">路径id</th>
+                <th width="35%" class="text-center">路径名称</th>
+                <th width="10%" class="text-center">action</th>
+                <th width="20%" class="text-center">源库位</th>
+                <th width="20%" class="text-center">目的库位</th>
+            </tr>
+            </thead>
+            <tbody>
+ 
+            <t t-foreach="first_rule" t-as="rule">
+            <tr>
+                <td><span t-field="rule.procure_method"/></td>
+                <td><span t-field="rule.route_id.id"/></td>
+                <td><span t-field="rule.route_id"/></td>
+                <td><span t-field="rule.action"/></td>
+                <td><span t-field="rule.location_src_id"/></td>
+                <td><span t-field="rule.location_id"/></td>
+            </tr>
+            </t>
+            </tbody>
+        </table>
+
+        <p/>
+        <h5 class="text-left">补货方式选择结果</h5>
+        <table class="table table-sm" style="font-size: 10px;" border="1"> 
+            <thead style="background-color: #eee">
+            <tr>
+                <th width="20%" class="text-center">序号</th>
+                <th width="50%"  class="text-center">选择依据</th>
+                <th width="30%" class="text-center">选择结果</th>
+            </tr>
+            </thead>
+            <tbody>
+            <t t-foreach="methods" t-as="method">
+            <tr>
+                <td><span t-esc="method['id']"/></td>
+                <td><span t-esc="method['desc']"/></td>
+                <td><span t-esc="method['usage']"/></td>
+              </tr>
+            </t>
+            </tbody>
+        </table>
+       
+    </div>   
+    </t>
+    </t>
+</template>
+
+<!--report
+        id="action_report_procure_method"
+        string="生产单中的补货方法"
+        model="stock.move"
+        report_type="qweb-html"
+        name="mrp_debug_procure.report_procure_method"
+        file="mrp_debug_procure.report_procure_method"
+        multi="False"
+        binding_model_id" 
+/-->
+
+    <record id="action_report_procure_method" model="ir.actions.report">
+        <field name="name">生产单中的补货方法</field>
+        <field name="model">stock.move</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">mrp_debug_procure.report_procure_method</field>
+        <field name="target">new</field>
+        <field name="multi" eval="False" />
+        <field name="binding_model_id" eval="False" />
+
+    </record>
+
+
+</odoo>

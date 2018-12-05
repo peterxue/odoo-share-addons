@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+        <record id="view_mrp_production" model="ir.ui.view">
+            <field name="name">mrp.production.form.inherit</field>
+            <field name="model">mrp.production</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="mrp.mrp_production_form_view" />
+            <field name="arch" type="xml">
+            
+                <xpath expr="//field[@name='quantity_done']" position="after">
+                    <field  string="补货方法" name="procure_method"/>
+                    <button type="action" name="%(action_report_procure_method)d"  icon="fa-files-o"   aria-label="Why" title="Why"/>
+                    <field  string="id" name="id"/>
+                </xpath>    
+            </field>
+        </record>
+     </data>
+</odoo>
