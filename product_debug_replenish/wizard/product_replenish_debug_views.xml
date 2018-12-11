@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_product_replenish_debug" model="ir.ui.view">
+        <field name="name">Replenish Debug</field>
+        <field name="model">product.replenish.debug</field>
+        <field name="arch" type="xml">
+            <form string="Replenish Debug wizard">
+                <p>
+                产品补货路线分析 -- 帮您了解产品补货的内部逻辑
+                </p>
+                <group>
+                    <field name="product_tmpl_id" invisible="1"/>
+                    <field name="product_has_variants" invisible="1"/>
+                    <field name="product_id" 
+                        domain="[('product_tmpl_id', '=', product_tmpl_id)]"
+                        attrs="{'readonly': [('product_has_variants', '=', False)]}"/>
+                    <field name="product_uom_category_id" invisible="1"/>
+                    <label for="quantity"/>
+                    <div>
+                        <field name="quantity" class="oe_inline"/>
+                        <field name="product_uom_id"
+                            domain="[('category_id', '=', product_uom_category_id)]"
+                            groups="uom.group_uom"
+                            class="oe_inline"/>
+                    </div>      
+                    <field name="date_planned"/>              
+                    <field name="location_id" />
+                    <field name="warehouse_id" />
+                    <field name="route_ids"  widget="many2many_tags"/>
+                </group>
+                <footer>
+                
+                    <button type="action"
+                        name="%(action_report_replenish_debug)d" 
+                        string="输出分析报告" 
+                        class="btn-primary"/>
+                    <button string="Discard" 
+                        class="btn-secondary"
+                        special="取消" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_debug_wizard" model="ir.actions.act_window">
+        <field name="name">Replenish Debug</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">product.replenish.debug</field>
+        <field name="src_model">product.product</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_product_replenish_debug"/>
+        <field name="target">new</field>
+    </record>
+</odoo>

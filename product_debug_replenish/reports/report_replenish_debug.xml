@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<template id="report_replenish_debug">
+    <t t-set="data_report_landscape" t-value="True"/>
+    <t t-call="web.basic_layout">
+    
+    <t t-foreach="docs" t-as="o">
+        
+        <t t-set="run_values" t-value="prepare_run_values(o)" />
+        <t t-set="get_rule_result" t-value="get_rule(o,run_values)" />
+        <t t-set="my_rule" t-value="get_rule_result['rule']"/>
+        <t t-set="my_logs" t-value="get_rule_result['logs']"/>
+        
+        <t t-set="all_routes_and_rule" t-value="get_all_routes_and_rule(o)" />
+    
+        <div class="page">
+        <h4 class="text-center"><u>&amp;nbsp;&amp;nbsp;补货路线分析&amp;nbsp;&amp;nbsp;</u></h4>
+        
+        <h5 class="text-left">产品基本信息</h5>
+        <table class="table table-sm" style="font-size: 10px;" border="1"> 
+            <thead style="background-color: #eee">
+            <tr>
+                <th width="5%" class="text-center">记录ID</th>
+                <th width="15%" class="text-center">产品</th>
+                <th width="15%" class="text-center">产品模板</th>
+                <th width="5%" class="text-center">Var</th>
+                <th width="5%" class="text-center">UOM分类</th>
+                <th width="5%" class="text-center">UOM</th>
+                <th width="10%" class="text-center">补货数量</th>
+                <th width="15%" class="text-center">预计日期</th>
+                <th width="10%" class="text-center">仓库</th>
+                <th width="15%" class="text-center">库位</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td ><span t-field="o.id"/></td>
+                <td ><span t-field="o.product_id"/></td>
+                <td ><span t-field="o.product_tmpl_id"/></td>
+                <td ><span t-field="o.product_has_variants"/></td>
+                <td ><span t-field="o.product_uom_category_id"/></td>
+                <td ><span t-field="o.product_uom_id"/></td>
+                <td ><span t-field="o.quantity"/></td>
+                <td ><span t-field="o.date_planned"/></td>
+                <td ><span t-field="o.warehouse_id"/></td>
+                <td ><span t-field="o.location_id"/></td>
+            </tr>
+            </tbody>
+        </table>
+
+        <h5 class="text-left">指定的路线</h5>
+        <table class="table table-sm" style="font-size: 10px;" border="1"> 
+            <thead style="background-color: #eee">
+            <tr>
+                <th width="10%"  class="text-center">路线ID</th>
+                <th width="20%" class="text-center">路线名称</th>
+                <th width="40%" class="text-center">路线显示名称</th>
+                <th width="20%" class="text-center">优先级</th>
+            </tr>
+            </thead>
+            <tbody>
+            <t t-foreach="o.product_id.route_ids" t-as="route"> 
+            <tr>
+                <td><span t-field="route.id"/></td>
+                <td><span t-field="route.name"/></td>
+                <td><span t-field="route.display_name"/></td>
+                <td><span t-field="route.sequence"/></td>
+            </tr>
+            </t>
+            </tbody>
+        </table>
+        
+        <h5 class="text-left">运行参数</h5>
+        <table class="table table-sm" style="font-size: 10px;" border="1"> 
+            <thead style="background-color: #eee">
+            <tr>
+                <t t-foreach="run_values.items()" t-as="d"> 
+                <td><span t-esc="d[0]"/></td>
+                </t>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <t t-foreach="run_values.items()" t-as="d"> 
+                <td><span t-esc="d[1]"/></td>
+                </t>
+            </tr>
+            </tbody>
+        </table>
+
+        
+        <h5 class="text-left">与产品[<span t-field="o.product_id" />]和仓库[<span t-field="o.warehouse_id" />]相关的路线</h5>
+        <table class="table table-sm" style="font-size: 10px;" border="1">
+            <thead style="background-color: #eee">
+            <tr>
+                <th width="10%" class="text-center">路线定义在</th>
+                <th width="10%"  class="text-center">路线ID</th>
+                <th width="20%" class="text-center">路线名称</th>
+                <th width="40%" class="text-center">路线显示名称</th>
+                <th width="20%" class="text-center">优先级</th>
+            </tr>
+            </thead>
+            <tbody>
+            <t t-foreach="all_routes_and_rule" t-as="data_by_sects"> 
+                <t t-foreach="data_by_sects['routes']" t-as="route">
+                <tr>
+                    <td><span t-esc="data_by_sects['section']" /></td>
+                    <td><span t-field="route.id"/></td>
+                    <td><span t-field="route.name"/></td>
+                    <td><span t-field="route.display_name"/></td>
+                    <td><span t-field="route.sequence"/></td>
+                </tr>
+                </t>
+            </t>
+            </tbody>
+        </table>
+        
+        
+        <h5 class="text-left">上列路线中的非PUSH规则</h5>
+        <table class="table table-sm" style="font-size: 10px;" border="1">
+            <thead style="background-color: #eee">
+            <tr>
+                <th width="10%" class="text-center">路线定义在</th>
+                <th width="10%"  class="text-center">路线id</th>
+                <th width="10%" class="text-center">action</th>
+
+                <th width="10%" class="text-center">补货方法</th>
+                <th width="20%" class="text-right">目的库位与</th>
+                <th width="20%" class="text-left">id</th>
+                <th width="10%" class="text-center">优先级</th>
+                <t t-foreach="my_logs" t-as="log"> 
+                   <th>库位<span t-esc="log['location']"/></th>
+                </t>      
+            </tr>
+            </thead>
+            <tbody>
+            <t t-foreach="all_routes_and_rule" t-as="data_by_sects"> 
+                <t t-foreach="data_by_sects['rules']" t-as="rule">
+                <tr>
+                <td><span t-esc="data_by_sects['section']" /></td>
+                <td><span t-field="rule.route_id.id"/></td>
+                <td><span t-field="rule.action"/></td>
+                <td><span t-field="rule.procure_method"/></td>
+                <td><span t-field="rule.location_id"/></td>
+                <td><span t-field="rule.location_id.id"/></td>
+                <td><span t-field="rule.sequence"/></td>
+                <t t-foreach="my_logs" t-as="log"> 
+                    <td>
+                    <t t-if="rule.location_id.id == log['location']">相符</t>
+                    <t t-else="">&amp;nbsp;</t>
+                    </td>
+                </t>
+                </tr>
+                </t>
+            </t> 
+            </tbody>
+        </table>
+ 
+ 
+        <h5 class="text-left">最终选定的规则</h5>
+        <table class="table table-sm" style="font-size: 10px;" border="1">
+            <thead style="background-color: #eee">
+            <tr>
+                <th width="5%" class="text-center">id</th>
+                <th width="10%" class="text-center">name</th>
+                <th width="10%" class="text-center">action</th>
+                <th width="20%"  class="text-center">路线</th>
+                <th width="10%" class="text-center">补货方法</th>
+                <th width="15%" class="text-center">源库位</th>
+                <th width="15%" class="text-center">目的库位</th>
+                <th width="10%" class="text-center">操作类型</th>
+                <th width="5%" class="text-center">优先级</th>
+            </tr>
+            </thead>
+            <tbody>
+            <t t-foreach="my_rule" t-as="rule"> 
+              <tr>
+                <td><span t-field="rule.id"/></td>
+                <td><span t-field="rule.name"/></td>
+                <td><span t-field="rule.action"/></td>
+                <td><span t-field="rule.route_id"/></td>
+                <td><span t-field="rule.procure_method"/></td>
+                <td><span t-field="rule.location_src_id"/></td>
+                <td><span t-field="rule.location_id"/></td>
+                <td><span t-field="rule.picking_type_id"/></td>
+                <td><span t-field="rule.sequence"/></td>
+              </tr>
+            </t> 
+            </tbody>
+        </table>
+ 
+        <p/>
+        <hr style="height:8px;" />
+        <p/>
+        
+        
+         <h6 class="text-left">附: 相关路线的查询条件:</h6>
+         <table class="table table-sm" style="font-size: 10px;" border="1">
+            <thead style="background-color: #eed">
+            <tr>
+                <th width="30%" class="text-center">范围</th>
+                <th width="70%" class="text-center">相关路线的查询条件</th>
+            </tr>
+            </thead>
+            <tbody>
+                <t t-foreach="all_routes_and_rule" t-as="data_by_sects"> 
+                <tr>
+                    <td><span t-esc="data_by_sects['section']" /></td>
+                    <td><span t-esc="data_by_sects['domain']" /></td>
+                </tr>
+            </t>
+            </tbody>
+         </table>
+
+        
+        <h6 class="text-left">附: 规则的查询过程:</h6>
+        <table class="table table-sm" style="font-size: 10px;" border="1">
+            <thead style="background-color: #eed">
+            <tr>
+                <th width="5%" class="text-center">迭代次数</th>
+                <th width="10%" class="text-center">查询范围</th>
+                <th width="5%" class="text-center">路线</th>
+                <th width="10%" class="text-center">产品</th>
+                <th width="10%" class="text-center">仓库</th>
+                <th width="10%" class="text-center">库位</th>
+                <th width="20%"  class="text-center">查询条件</th>
+
+                <th width="20%" class="text-center">查询结果</th>
+            </tr>
+            </thead>
+            <tbody>
+             <t t-foreach="my_logs" t-as="log"> 
+            <tr>
+                <td><span t-esc="log['iter_num']"/></td>
+                <td><span t-esc="log['running_flag']"/></td>
+                <td><span t-esc="log['input_route_ids']"/></td>
+                <td><span t-esc="log['input_product_name']"/></td>
+                <td><span t-esc="log['input_warehouse_name']"/></td>
+                <td><span t-esc="log['location_name']"/></td>
+                <td><span t-esc="log['search_domain']"/></td>
+
+                <td><span t-esc="log['result']"/></td>
+            </tr>
+            </t>
+            </tbody>
+         </table>
+ 
+ 
+ 
+       </div>   
+    </t> <!-- for each docs -->
+    </t>  <!-- call basic layout -->
+     
+     
+</template>
+
+<report
+        id="action_report_replenish_debug"
+        string="补货路线分析"
+        model="product.replenish.debug"
+        report_type="qweb-html"
+        name="product_debug_replenish.report_replenish_debug"
+        file="product_debug_replenish.report_replenish_debug"
+        multi="False" 
+/>
+
+
+
+
+</odoo>
